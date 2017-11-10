@@ -32,44 +32,56 @@ class SparkJob(object):
     def setUp(self, code):
         py_file = self.file_name + ".py"
         f = open(py_file, 'w')
+        f1 = open('main.py', 'r')
+        f1_data = f1.read()
+        code += '\n\n' + f1_data
         f.write(code)
         f.close()
         S3.upload_file_to_s3(py_file, "dianemo", "scripts/"+py_file)
-        self.script_path = "s3n://dianemo/scripts/" + py_file
-
+        self.script_path = "s3://dianemo/scripts/" + py_file
 
     def run_spark_job(self):
         client = boto3.client('emr')
         input_url = self.input_url
-        output_url = 's3n://dianemo/output/' + self.file_name + '.txt'
-        local_output_path = self.file_name + "-output.txt"
+        output_url = 's3://dianemo/output/' + self.file_name + '.txt'
+        local_output_path = '/home/hadoop/' + self.file_name + "-output.txt"
         steps = [
-        {
-            "Name": "Copying script",
-            "ActionOnFailure": "CANCEL_AND_WAIT",
-            "HadoopJarStep": {
-                "Jar": "command-runner.jar",
-                "Args": ["aws", "s3", "cp", self.script_path, '/home/hadoop/script.py']
+            {
+                "Name": "Copying script",
+                "ActionOnFailure": "CANCEL_AND_WAIT",
+                "HadoopJarStep": {
+                    "Jar": "command-runner.jar",
+                    "Args": ["aws", "s3", "cp", self.script_path, '/home/hadoop/script.py']
+                }
+            },
+            {
+                "Name": "Running new job",
+                "ActionOnFailure": "CANCEL_AND_WAIT",
+                "HadoopJarStep": {
+                    "Jar": "command-runner.jar",
+                    "Args": ['/usr/bin/spark-submit', '/home/hadoop/script.py', input_url]
+                }
+            },
+            {
+                "Name": "Uploading output to S3",
+                "ActionOnFailure": "CANCEL_AND_WAIT",
+                "HadoopJarStep": {
+                    "Jar": "command-runner.jar",
+                    "Args": ["aws", "s3", "cp", local_output_path, output_url]
+                }
             }
-        },
-        {
-            "Name": "Running new job",
-            "ActionOnFailure": "CANCEL_AND_WAIT",
-            "HadoopJarStep": {
-                "Jar": "command-runner.jar",
-                "Args": ['/usr/bin/spark-submit', '--py-files',
-                    '/home/hadoop/script.py', '/home/hadoop/main.py', input_url]
-            }
-        },
-        {
-            "Name": "Uploading output to S3",
-            "ActionOnFailure": "CANCEL_AND_WAIT",
-            "HadoopJarStep": {
-                "Jar": "command-runner.jar",
-                "Args": ["aws", "s3", "cp", local_output_path, output_url]
-            }
-        }]
+        ]
+        # steps_new = [
+        #     {
+        #         "Name": "Running new job",
+        #         "ActionOnFailure": "CANCEL_AND_WAIT",
+        #         "HadoopJarStep": {
+        #             "Jar": "command-runner.jar",
+        #             "Args": ['/usr/bin/spark-submit', '/home/hadoop/wordcount.py', 's3n://he-bigdata/request_log/2015/10/12/*.json']
+        #         }
+        #     },
+        # ]
         action = client.add_job_flow_steps(
                     JobFlowId=self.job_flow_id,
-                    Steps=[copy_step, execution_step])
+                    Steps=steps)
         print("Added step: %s"%(action))

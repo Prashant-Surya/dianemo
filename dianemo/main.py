@@ -1,5 +1,4 @@
-import boto3, os, sys
-from script import job
+import os, sys
 
 class Distributor(object):
 
