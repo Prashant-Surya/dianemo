@@ -62,14 +62,14 @@ class SparkJob(object):
                     "Args": ['/usr/bin/spark-submit', '/home/hadoop/script.py', input_url]
                 }
             },
-            {
-                "Name": "Uploading output to S3",
-                "ActionOnFailure": "CANCEL_AND_WAIT",
-                "HadoopJarStep": {
-                    "Jar": "command-runner.jar",
-                    "Args": ["aws", "s3", "cp", local_output_path, output_url]
-                }
-            }
+            # {
+            #     "Name": "Uploading output to S3",
+            #     "ActionOnFailure": "CANCEL_AND_WAIT",
+            #     "HadoopJarStep": {
+            #         "Jar": "command-runner.jar",
+            #         "Args": ["aws", "s3", "cp", local_output_path, output_url]
+            #     }
+            # }
         ]
         # steps_new = [
         #     {
