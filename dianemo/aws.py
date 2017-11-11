@@ -30,9 +30,10 @@ class SparkJob(object):
             self.job_flow_id = job_flow_id
 
     def setUp(self, code):
+        from dianemo import main
         py_file = self.file_name + ".py"
         f = open(py_file, 'w')
-        f1 = open('main.py', 'r')
+        f1 = open(main.__file__, 'r')
         f1_data = f1.read()
         code += '\n\n' + f1_data
         f.write(code)
