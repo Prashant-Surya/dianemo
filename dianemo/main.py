@@ -24,10 +24,10 @@ class Distributor(object):
         output = job(self.input_url)
         file_name = self.input_url.split('/')[-1].split('.')[0]
         output_name = file_name + "-output.txt"
-        f = open(output_name, 'w')
+        local_output_path = '/home/hadoop/' + output_name
+        f = open(local_output_path, 'w')
         f.write(output)
         f.close()
-        local_output_path = '/home/hadoop/' + output_name
         print("Moving from " + local_output_path + " to " + 'dianemo/' + output_name)
         S3.upload_file_to_s3(local_output_path, 'dianemo', output_name)
 
