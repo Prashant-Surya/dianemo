@@ -33,7 +33,10 @@ class SparkJob(object):
         from dianemo import main
         py_file = self.file_name + ".py"
         f = open(py_file, 'w')
-        f1 = open(main.__file__, 'r')
+        main_file = main.__file__
+        if main_file.endswith('.pyc'):
+            main_file = main_file.replace('.pyc', '.py')
+        f1 = open(main_file, 'r')
         f1_data = f1.read()
         code += '\n\n' + f1_data
         f.write(code)
